@@ -39,11 +39,20 @@ set_target_properties (
       COMPILE_FLAGS "-include all.h -D TESTROOT=\\\\\"${PROJECT_SOURCE_DIR}\\\\\" -g -Wall -Wextra"
       )
 else(APPLE)
-set_target_properties (
-      genManual
-      PROPERTIES
-      COMPILE_FLAGS "-include all.h -D TESTROOT=\\\"${PROJECT_SOURCE_DIR}\\\" -g -Wall -Wextra"
-      )
+   if (NOT MSVC)
+      set_target_properties (
+         genManual
+         PROPERTIES
+         COMPILE_FLAGS "-include all.h -D TESTROOT=\\\"${PROJECT_SOURCE_DIR}\\\" -g -Wall -Wextra"
+         )
+   else (NOT MSVC)
+      set_target_properties (
+         genManual
+         PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} -D TESTROOT=\\\"${PROJECT_SOURCE_DIR}\\\""
+         )
+
+   endif (NOT MSVC)
 endif(APPLE)
 
 ADD_DEPENDENCIES(genManual mops1)

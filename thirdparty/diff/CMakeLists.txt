@@ -33,11 +33,19 @@ add_library(diff_match_patch STATIC
    ${INCS}
    )
 
-set_target_properties (
+if (NOT MSVC)
+   set_target_properties (
       diff_match_patch
       PROPERTIES
          COMPILE_FLAGS "${PCH_INCLUDE} -g -Wall -Wextra -Winvalid-pch"
       )
+else (NOT MSVC)
+   set_target_properties (
+      diff_match_patch
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE}"
+      )
+endif (NOT MSVC)   
 
 xcode_pch(diff_match_patch all)
 

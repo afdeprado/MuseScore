@@ -33,11 +33,19 @@ add_library(ofqf STATIC
    qoscclient.cpp qoscserver.cpp qosctypes.cpp
    )
 
-set_target_properties (
+if (NOT MSVC)
+   set_target_properties (
       ofqf
       PROPERTIES
          COMPILE_FLAGS "${PCH_INCLUDE} -g -Wall -Wextra -Winvalid-pch"
       )
+else (NOT MSVC)
+   set_target_properties (
+      ofqf
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE}"
+      )
+endif (NOT MSVC)   
 
 xcode_pch(ofqf all)
 

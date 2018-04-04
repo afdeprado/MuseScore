@@ -79,21 +79,29 @@ add_library (
 ##
 
 set(COVERAGE_OPTIONS "")
-if (NOT APPLE AND NOT MINGW AND CMAKE_BUILD_TYPE MATCHES "DEBUG")
+if (NOT APPLE AND NOT MINGW AND NOT MSVC AND CMAKE_BUILD_TYPE MATCHES "DEBUG")
    if (COVERAGE)
       set(COVERAGE_OPTIONS "-O0 --coverage")
       set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
       target_link_libraries(libmscore gcov)
    endif (COVERAGE)
-endif (NOT APPLE AND NOT MINGW AND CMAKE_BUILD_TYPE MATCHES "DEBUG")
+endif (NOT APPLE AND NOT MINGW AND NOT MSVC AND CMAKE_BUILD_TYPE MATCHES "DEBUG")
 
 
 
-set_target_properties (
+if (NOT MSVC)
+   set_target_properties (
       libmscore
       PROPERTIES
          COMPILE_FLAGS "-g ${PCH_INCLUDE} -Wall -Wextra -Winvalid-pch -Woverloaded-virtual ${COVERAGE_OPTIONS}"
       )
+else (NOT MSVC)
+   set_target_properties (
+      libmscore
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE}"
+      )
+endif (NOT MSVC)   
 
 xcode_pch(libmscore all)
 
