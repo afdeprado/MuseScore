@@ -41,11 +41,20 @@ add_library (effects STATIC
       compressor/compressorgui.cpp
       ${INCS}
       )
-set_target_properties (
+
+if (NOT MSVC)
+   set_target_properties (
       effects
       PROPERTIES
          COMPILE_FLAGS "${PCH_INCLUDE} -g -Wall -Wextra -Winvalid-pch"
       )
+else (NOT MSVC)
+   set_target_properties (
+      effects
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE}"
+      )
+endif (NOT MSVC)   
 
 xcode_pch(effects all)
 

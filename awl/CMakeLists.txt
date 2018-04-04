@@ -40,11 +40,19 @@ add_library (
       knob.h midipanknob.h mslider.h panknob.h pitchedit.h pitchlabel.h
       poslabel.h slider.h utils.h volknob.h volslider.h
       )
-set_target_properties (
+if (NOT MSVC)
+   set_target_properties (
       awl
       PROPERTIES
          COMPILE_FLAGS "${PCH_INCLUDE} -g -Wall -Wextra -Winvalid-pch"
       )
+else (NOT MSVC)
+   set_target_properties (
+      awl
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE}"
+      )
+endif (NOT MSVC)   
 
 xcode_pch(awl all)
 
@@ -74,11 +82,20 @@ add_library (
 #
 # We cannot use our precompiled headers because of -fPIC
 #
-set_target_properties(awlplugin
+if (NOT MSVC)
+   set_target_properties(awlplugin
       PROPERTIES
       COMPILE_FLAGS
          "-fPIC -D_GNU_SOURCE -D_REENTRANT -DHAVE_CONFIG_H -DQT_PLUGIN -DQT_SHARED -DQT_NO_DEBUG -include ${PROJECT_SOURCE_DIR}/all.h"
       )
+else (NOT MSVC)
+   # x86 archictecture does not support position-independent code, the -fPIC option is not relevant for this processor.
+   set_target_properties (
+      awlplugin
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} -D_GNU_SOURCE -D_REENTRANT -DHAVE_CONFIG_H -DQT_PLUGIN -DQT_SHARED -DQT_NO_DEBUG"
+      )
+endif (NOT MSVC)   
 
 # Don't install awlplugin on default
 #install( TARGETS awlplugin DESTINATION ${designerPlugins}/plugins/designer/ )

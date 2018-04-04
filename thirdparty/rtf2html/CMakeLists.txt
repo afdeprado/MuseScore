@@ -35,10 +35,17 @@ add_library (
   rtf_table.cpp
   )
 
-set_target_properties( rtf2html
-   PROPERTIES
-      COMPILE_FLAGS "${PCH_INCLUDE} -g -Wall -Wextra -Winvalid-pch"
-   )
+if (NOT MSVC)
+   set_target_properties( rtf2html
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} -g -Wall -Wextra -Winvalid-pch"
+      )
+else (NOT MSVC)
+   set_target_properties ( rtf2html
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE}"
+      )
+endif (NOT MSVC)   
 
 xcode_pch(rtf2html all)
 

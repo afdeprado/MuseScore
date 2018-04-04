@@ -378,11 +378,11 @@ if (USE_SYSTEM_FREETYPE)
       target_link_libraries(mscore ${FREETYPE_LIBRARIES})
 endif (USE_SYSTEM_FREETYPE)
 
-if (MINGW)
+if (MINGW OR MSVC)
       set(MSCORE_OUTPUT_NAME ${MUSESCORE_NAME})
 elseif (MSCORE_INSTALL_SUFFIX)
       set(MSCORE_OUTPUT_NAME "${ExecutableName}${MSCORE_INSTALL_SUFFIX}")
-endif (MINGW)
+endif (MINGW OR MSVC)
 
 # If MSCORE_OUTPUT_NAME is set (e.g, when cmake is called by the user), the output executable will be
 # called MSCORE_OUTPUT_NAME instead of 'mscore'. This can be used to have MuseScore stable and unstable
@@ -437,7 +437,7 @@ if (MINGW)
       ${PROJECT_BINARY_DIR}/resfile.o
       PROPERTIES generated true
       )
-   string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE)
+   string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
    # Windows: Add -mconsole to LINK_FLAGS to get a console window for debug output
    if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
      set_target_properties( mscore
