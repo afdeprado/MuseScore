@@ -39,11 +39,19 @@ add_library (
       ${OCR_SRC}
       )
 
-set_target_properties (
+if (NOT MSVC)
+   set_target_properties (
       omr
       PROPERTIES
          COMPILE_FLAGS "${PCH_INCLUDE} -g -Wall -Wextra -Winvalid-pch -Wno-unused-private-field"
       )
+else (NOT MSVC)
+   set_target_properties (
+      omr
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE}"    # TODO: Add disabling of unused private field warning?
+      )
+endif (NOT MSVC)   
 
 xcode_pch(omr all)
 

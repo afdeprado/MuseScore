@@ -30,19 +30,43 @@ macro( precompiled_header includes header_name build_pch)
         separate_arguments( compile_flags )
 
         set (PCH_HEADER "${PROJECT_BINARY_DIR}/${header_name}.h")
-        set (PCH_INCLUDE "-include ${PCH_HEADER}")
+        if (NOT MSVC)
+            set (PCH_INCLUDE "-include ${PCH_HEADER}")
+        else (NOT MSVC)
+            set (PCH_INCLUDE "/FI${PCH_HEADER}")
+        endif (NOT MSVC)
 
         if( ${build_pch} )
-            set (PCH ${PROJECT_BINARY_DIR}/${header_name}.h.gch)
-            add_custom_command(
-             OUTPUT ${PROJECT_BINARY_DIR}/${header_name}.h.gch
-             COMMAND ${CMAKE_CXX_COMPILER} -x c++-header -g  ${compile_flags} -o ${header_name}.h.gch ${header_name}.h
-             DEPENDS ${PROJECT_BINARY_DIR}/${header_name}.h
-             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-             VERBATIM
-             )
+            if(NOT MSVC)
+               set (PCH ${PROJECT_BINARY_DIR}/${header_name}.h.gch)
+               set (PCH_FORCE_USE "")
+               add_custom_command(
+                  OUTPUT ${PROJECT_BINARY_DIR}/${header_name}.h.gch
+                  COMMAND ${CMAKE_CXX_COMPILER} -x c++-header -g  ${compile_flags} -o ${header_name}.h.gch ${header_name}.h
+                  DEPENDS ${PROJECT_BINARY_DIR}/${header_name}.h
+                  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+                  VERBATIM
+                  )
+            else (NOT MSVC)
+               # Create pre-compiled header file for MSVC.
+               list (REMOVE_DUPLICATES compile_flags)
+               set (PCH ${PROJECT_BINARY_DIR}/${header_name}.pch)
+               # NOTE: MSVC is picky about PCH: it is difficult to share them amongst different projects (almost impossible).
+               #       By default, if a PCH file was created by another project, it gets deleted before attempting compilation.
+               #       Best solution would be to create PCH-files per project (per subdir).
+               # set (PCH_FORCE_USE "/Fp${PCH} /Yu${PCH_HEADER}")
+               set (PCH_FORCE_USE "")     # Temp -> do not use precompiled headers, not working right now!
+               add_custom_command(
+                  OUTPUT ${PROJECT_BINARY_DIR}/${header_name}.pch
+                  COMMAND ${CMAKE_CXX_COMPILER} ${compile_flags} /c /Yc${header_name}.h /Fp${header_name}.pch ${header_name}.cpp
+                  DEPENDS ${PROJECT_BINARY_DIR}/${header_name}.h ${PROJECT_BINARY_DIR}/${header_name}.cpp
+                  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+                  VERBATIM
+                  )
+            endif (NOT MSVC)
         else ( ${build_pch} )
             message(STATUS "No precompiled header")
+            set (PCH_FORCE_USE "")
         endif( ${build_pch} )
     endif()
 endmacro()

@@ -37,11 +37,19 @@ add_library(kqoauth STATIC
    ${INCS}
    )
 
-set_target_properties (
+if (NOT MSVC)
+   set_target_properties (
       kqoauth
       PROPERTIES
          COMPILE_FLAGS "${PCH_INCLUDE} -I ${PROJECT_SOURCE_DIR}/thirdparty/openssl/include -g -Wall -Wextra -Winvalid-pch"
       )
+else (NOT MSVC)
+   set_target_properties (
+      kqoauth
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE} /I${PROJECT_SOURCE_DIR}/thirdparty/openssl/include"
+      )
+endif (NOT MSVC)   
 
 xcode_pch(kqoauth all)
 

@@ -35,7 +35,15 @@ add_library(bww STATIC
    writer.cpp
    )
 
-if (NOT MINGW AND NOT APPLE)
+if (MSVC)
+   set_target_properties (
+      bww
+      PROPERTIES
+         COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE}"
+      )
+endif (MSVC)
+
+if (NOT MINGW AND NOT APPLE AND NOT MSVC)
    add_executable(bww2mxml
       ${INCS}
       lexer.cpp
@@ -57,7 +65,7 @@ if (NOT MINGW AND NOT APPLE)
       )
    ADD_DEPENDENCIES(bww2mxml mops1)
    ADD_DEPENDENCIES(bww2mxml mops2)
-endif (NOT MINGW AND NOT APPLE)
+endif (NOT MINGW AND NOT APPLE AND NOT MSVC)
 
 xcode_pch(bww all)
 
