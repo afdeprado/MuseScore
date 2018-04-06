@@ -160,11 +160,16 @@ endif (APPLE)
 set (AUDIO "")
 if (MINGW)
       set (resource_file ${PROJECT_BINARY_DIR}/resfile.o)
-else (MINGW)
+endif (MINGW)
+if (MSVC)
+      # MSVC recognizes a *.rc file and will invoke the resource compiler to link it
+      set (resource_file ${PROJECT_SOURCE_DIR}/mscore/data/mscore.rc)
+endif ( MSVC )
+if ( NOT MINGW AND NOT MSVC )
       if (USE_ALSA)
             set (AUDIO ${AUDIO} alsa.cpp)
       endif (USE_ALSA)
-endif (MINGW)
+endif ( NOT MINGW AND NOT MSVC )
 
 if (USE_PORTAUDIO)
       set (AUDIO ${AUDIO} pa.cpp)
@@ -540,125 +545,232 @@ if (MINGW)
       REGEX ".*QtWebkit.*" EXCLUDE)
 
 else (MINGW)
-   target_link_libraries(mscore
-      ${ALSA_LIB}
-      ${QT_LIBRARIES}
-      z
-      ${CMAKE_DL_LIBS}
-      pthread
-      )
+   if ( NOT MSVC )
+      target_link_libraries(mscore
+         ${ALSA_LIB}
+         ${QT_LIBRARIES}
+         z
+         ${CMAKE_DL_LIBS}
+         pthread
+         )
 
-    if (USE_SYSTEM_FREETYPE)
-         target_link_libraries(mscore freetype)
-    else (USE_SYSTEM_FREETYPE)
-         target_link_libraries(mscore mscore_freetype)
-    endif (USE_SYSTEM_FREETYPE)
+       if (USE_SYSTEM_FREETYPE)
+            target_link_libraries(mscore freetype)
+       else (USE_SYSTEM_FREETYPE)
+            target_link_libraries(mscore mscore_freetype)
+       endif (USE_SYSTEM_FREETYPE)
 
-    if (USE_PORTAUDIO)
-      target_link_libraries(mscore ${PORTAUDIO_LIB})
-    endif (USE_PORTAUDIO)
+       if (USE_PORTAUDIO)
+         target_link_libraries(mscore ${PORTAUDIO_LIB})
+       endif (USE_PORTAUDIO)
 
-    if (USE_PORTMIDI)
-        if (APPLE)
-            set(PORTMIDI_LIB portmidi)
-        else (APPLE)
-            set(PORTMIDI_LIB -lportmidi -lporttime) # Remove -lporttime on RPM-based systems where PortTime is part of PortMidi.
-        endif (APPLE)
-        target_link_libraries(mscore ${PORTMIDI_LIB})
-    endif (USE_PORTMIDI)
+       if (USE_PORTMIDI)
+           if (APPLE)
+               set(PORTMIDI_LIB portmidi)
+           else (APPLE)
+               set(PORTMIDI_LIB -lportmidi -lporttime) # Remove -lporttime on RPM-based systems where PortTime is part of PortMidi.
+           endif (APPLE)
+           target_link_libraries(mscore ${PORTMIDI_LIB})
+       endif (USE_PORTMIDI)
 
-    if (USE_PULSEAUDIO)
-      target_link_libraries(mscore ${PULSEAUDIO_LIBRARY})
-    endif (USE_PULSEAUDIO)
+       if (USE_PULSEAUDIO)
+         target_link_libraries(mscore ${PULSEAUDIO_LIBRARY})
+       endif (USE_PULSEAUDIO)
 
-   set_target_properties (
-      mscore
-      PROPERTIES
-         COMPILE_FLAGS "${PCH_INCLUDE} -g -Wall -Wno-overloaded-virtual -Winvalid-pch"
-      )
+      set_target_properties (
+         mscore
+         PROPERTIES
+            COMPILE_FLAGS "${PCH_INCLUDE} -g -Wall -Wno-overloaded-virtual -Winvalid-pch"
+         )
 
-   if (OMR)
-      target_link_libraries(mscore omr poppler)
-      if (OCR)
-            target_link_libraries(mscore tesseract_api)
-      endif (OCR)
-   endif (OMR)
+      if (OMR)
+         target_link_libraries(mscore omr poppler)
+         if (OCR)
+               target_link_libraries(mscore tesseract_api)
+         endif (OCR)
+      endif (OMR)
 
-   if (APPLE)
-     target_link_libraries(mscore ${OsxFrameworks})
-   else (APPLE)
-       target_link_libraries(mscore rt)
-   endif (APPLE)
+      if (APPLE)
+        target_link_libraries(mscore ${OsxFrameworks})
+      else (APPLE)
+          target_link_libraries(mscore rt)
+      endif (APPLE)
 
-   # 'gold' does not use indirect shared libraries for symbol resolution, Linux only
-   if (NOT APPLE)
-      if(USE_JACK)
-         target_link_libraries(mscore ${CMAKE_DL_LIBS})
-      endif(USE_JACK)
-      target_link_libraries(mscore rt)
-   endif (NOT APPLE)
+      # 'gold' does not use indirect shared libraries for symbol resolution, Linux only
+      if (NOT APPLE)
+         if(USE_JACK)
+            target_link_libraries(mscore ${CMAKE_DL_LIBS})
+         endif(USE_JACK)
+         target_link_libraries(mscore rt)
+      endif (NOT APPLE)
 
-   if (APPLE)
-      set_target_properties(mscore
-        PROPERTIES
-           LINK_FLAGS "-stdlib=libc++"
-        )
-     xcode_pch(mscore all)
-     install (TARGETS mscore BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX})
-     install (FILES data/mscore.icns DESTINATION ${Mscore_SHARE_NAME}${Mscore_INSTALL_NAME})
-     install (FILES data/musescoreDocument.icns DESTINATION ${Mscore_SHARE_NAME}${Mscore_INSTALL_NAME})
-   else (APPLE)
-     #### PACKAGING for Linux and BSD based systems (more in top-level CMakeLists.txt) ####
-     # Install mscore executable (package maintainers may add "MuseScore" and/or "musescore" aliases that symlink to mscore)
-     install( TARGETS mscore RUNTIME DESTINATION bin )
-     if (LN_EXECUTABLE)
-        add_custom_target(mscore_alias ALL
-            COMMAND echo "Creating symlink alias for mscore executable."
-            COMMAND ${LN_EXECUTABLE} -sf "mscore${MSCORE_INSTALL_SUFFIX}" "musescore${MSCORE_INSTALL_SUFFIX}"
-            COMMAND echo 'Symlink alias: musescore${MSCORE_INSTALL_SUFFIX} -> mscore${MSCORE_INSTALL_SUFFIX}'
-            )
-        install( FILES ${PROJECT_BINARY_DIR}/mscore/musescore${MSCORE_INSTALL_SUFFIX} DESTINATION bin)
-     else (LN_EXECUTABLE)
-        add_custom_target(mscore_alias ALL
-            COMMAND echo "No symlink aliases will be created."
-            VERBATIM
-            )
-     endif (LN_EXECUTABLE)
-     # Install MuseScore icons (use SVGs where possible, but install PNGs as backup for systems that don't support SVG)
-     if (MSCORE_UNSTABLE)
-         set(MSCORE_ICON_BASE ../assets/musescore-icon-square) # Square icons on development builds
-     else (MSCORE_UNSTABLE)
-         set(MSCORE_ICON_BASE ../assets/musescore-icon-round) # Round icons on stable releases
-     endif (MSCORE_UNSTABLE)
-     install(FILES ${MSCORE_ICON_BASE}.svg RENAME mscore${MSCORE_INSTALL_SUFFIX}.svg DESTINATION share/icons/hicolor/scalable/apps)
-     install(FILES ${MSCORE_ICON_BASE}-16.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/16x16/apps)
-     install(FILES ${MSCORE_ICON_BASE}-24.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/24x24/apps)
-     install(FILES ${MSCORE_ICON_BASE}-32.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/32x32/apps)
-     install(FILES ${MSCORE_ICON_BASE}-48.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/48x48/apps)
-     install(FILES ${MSCORE_ICON_BASE}-64.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/64x64/apps)
-     install(FILES ${MSCORE_ICON_BASE}-96.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/96x96/apps)
-     install(FILES ${MSCORE_ICON_BASE}-128.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/128x128/apps)
-     install(FILES ${MSCORE_ICON_BASE}-512.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/512x512/apps)
-     # Install MIME (filetype) icons for each mimetype on Linux
-     install( FILES   ../assets/mscz-icon.svg RENAME application-x-musescore${MSCORE_INSTALL_SUFFIX}.svg
-        DESTINATION share/icons/hicolor/scalable/mimetypes) # SVG icon for .MSCZ files
-     install( FILES   ../assets/mscz-icon-48.png RENAME application-x-musescore${MSCORE_INSTALL_SUFFIX}.png
-        DESTINATION share/icons/hicolor/48x48/mimetypes) # PNG icon for .MSCZ files
-     install( FILES   ../assets/mscx-icon.svg RENAME application-x-musescore${MSCORE_INSTALL_SUFFIX}+xml.svg
-        DESTINATION share/icons/hicolor/scalable/mimetypes) # SVG icon for .MSCX files
-     install( FILES   ../assets/mscx-icon-48.png RENAME application-x-musescore${MSCORE_INSTALL_SUFFIX}+xml.png
-        DESTINATION share/icons/hicolor/48x48/mimetypes) # PNG icon for .MSCX files
-     # use a custom icon for MusicXML files (there isn't a standard icon for MusicXML files)
-     install( FILES   ../assets/mxl-icon.svg RENAME application-vnd.recordare.musicxml${MSCORE_INSTALL_SUFFIX}.svg
-        DESTINATION share/icons/hicolor/scalable/mimetypes) # SVG icon for .MXL (compressed MusicXML) files
-     install( FILES   ../assets/mxl-icon-48.png RENAME application-vnd.recordare.musicxml${MSCORE_INSTALL_SUFFIX}.png
-        DESTINATION share/icons/hicolor/48x48/mimetypes) # PNG icon for .MXL (compressed MusicXML) files
-     install( FILES   ../assets/xml-icon.svg RENAME application-vnd.recordare.musicxml${MSCORE_INSTALL_SUFFIX}+xml.svg
-        DESTINATION share/icons/hicolor/scalable/mimetypes) # SVG icon for .XML (MusicXML) files
-     install( FILES   ../assets/xml-icon-48.png RENAME application-vnd.recordare.musicxml${MSCORE_INSTALL_SUFFIX}+xml.png
-        DESTINATION share/icons/hicolor/48x48/mimetypes) # PNG icon for .XML (MusicXML) files
-     # Note: Must now run "gtk-update-icon-cache" to set the new icons. This is done in the Makefile.
-   endif (APPLE)
+      if (APPLE)
+         set_target_properties(mscore
+           PROPERTIES
+              LINK_FLAGS "-stdlib=libc++"
+           )
+        xcode_pch(mscore all)
+        install (TARGETS mscore BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX})
+        install (FILES data/mscore.icns DESTINATION ${Mscore_SHARE_NAME}${Mscore_INSTALL_NAME})
+        install (FILES data/musescoreDocument.icns DESTINATION ${Mscore_SHARE_NAME}${Mscore_INSTALL_NAME})
+      else (APPLE)
+        #### PACKAGING for Linux and BSD based systems (more in top-level CMakeLists.txt) ####
+        # Install mscore executable (package maintainers may add "MuseScore" and/or "musescore" aliases that symlink to mscore)
+        install( TARGETS mscore RUNTIME DESTINATION bin )
+        if (LN_EXECUTABLE)
+           add_custom_target(mscore_alias ALL
+               COMMAND echo "Creating symlink alias for mscore executable."
+               COMMAND ${LN_EXECUTABLE} -sf "mscore${MSCORE_INSTALL_SUFFIX}" "musescore${MSCORE_INSTALL_SUFFIX}"
+               COMMAND echo 'Symlink alias: musescore${MSCORE_INSTALL_SUFFIX} -> mscore${MSCORE_INSTALL_SUFFIX}'
+               )
+           install( FILES ${PROJECT_BINARY_DIR}/mscore/musescore${MSCORE_INSTALL_SUFFIX} DESTINATION bin)
+        else (LN_EXECUTABLE)
+           add_custom_target(mscore_alias ALL
+               COMMAND echo "No symlink aliases will be created."
+               VERBATIM
+               )
+        endif (LN_EXECUTABLE)
+        # Install MuseScore icons (use SVGs where possible, but install PNGs as backup for systems that don't support SVG)
+        if (MSCORE_UNSTABLE)
+            set(MSCORE_ICON_BASE ../assets/musescore-icon-square) # Square icons on development builds
+        else (MSCORE_UNSTABLE)
+            set(MSCORE_ICON_BASE ../assets/musescore-icon-round) # Round icons on stable releases
+        endif (MSCORE_UNSTABLE)
+        install(FILES ${MSCORE_ICON_BASE}.svg RENAME mscore${MSCORE_INSTALL_SUFFIX}.svg DESTINATION share/icons/hicolor/scalable/apps)
+        install(FILES ${MSCORE_ICON_BASE}-16.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/16x16/apps)
+        install(FILES ${MSCORE_ICON_BASE}-24.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/24x24/apps)
+        install(FILES ${MSCORE_ICON_BASE}-32.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/32x32/apps)
+        install(FILES ${MSCORE_ICON_BASE}-48.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/48x48/apps)
+        install(FILES ${MSCORE_ICON_BASE}-64.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/64x64/apps)
+        install(FILES ${MSCORE_ICON_BASE}-96.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/96x96/apps)
+        install(FILES ${MSCORE_ICON_BASE}-128.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/128x128/apps)
+        install(FILES ${MSCORE_ICON_BASE}-512.png RENAME mscore${MSCORE_INSTALL_SUFFIX}.png DESTINATION share/icons/hicolor/512x512/apps)
+        # Install MIME (filetype) icons for each mimetype on Linux
+        install( FILES   ../assets/mscz-icon.svg RENAME application-x-musescore${MSCORE_INSTALL_SUFFIX}.svg
+           DESTINATION share/icons/hicolor/scalable/mimetypes) # SVG icon for .MSCZ files
+        install( FILES   ../assets/mscz-icon-48.png RENAME application-x-musescore${MSCORE_INSTALL_SUFFIX}.png
+           DESTINATION share/icons/hicolor/48x48/mimetypes) # PNG icon for .MSCZ files
+        install( FILES   ../assets/mscx-icon.svg RENAME application-x-musescore${MSCORE_INSTALL_SUFFIX}+xml.svg
+           DESTINATION share/icons/hicolor/scalable/mimetypes) # SVG icon for .MSCX files
+        install( FILES   ../assets/mscx-icon-48.png RENAME application-x-musescore${MSCORE_INSTALL_SUFFIX}+xml.png
+           DESTINATION share/icons/hicolor/48x48/mimetypes) # PNG icon for .MSCX files
+        # use a custom icon for MusicXML files (there isn't a standard icon for MusicXML files)
+        install( FILES   ../assets/mxl-icon.svg RENAME application-vnd.recordare.musicxml${MSCORE_INSTALL_SUFFIX}.svg
+           DESTINATION share/icons/hicolor/scalable/mimetypes) # SVG icon for .MXL (compressed MusicXML) files
+        install( FILES   ../assets/mxl-icon-48.png RENAME application-vnd.recordare.musicxml${MSCORE_INSTALL_SUFFIX}.png
+           DESTINATION share/icons/hicolor/48x48/mimetypes) # PNG icon for .MXL (compressed MusicXML) files
+        install( FILES   ../assets/xml-icon.svg RENAME application-vnd.recordare.musicxml${MSCORE_INSTALL_SUFFIX}+xml.svg
+           DESTINATION share/icons/hicolor/scalable/mimetypes) # SVG icon for .XML (MusicXML) files
+        install( FILES   ../assets/xml-icon-48.png RENAME application-vnd.recordare.musicxml${MSCORE_INSTALL_SUFFIX}+xml.png
+           DESTINATION share/icons/hicolor/48x48/mimetypes) # PNG icon for .XML (MusicXML) files
+        # Note: Must now run "gtk-update-icon-cache" to set the new icons. This is done in the Makefile.
+      endif (APPLE)
+   else ( NOT MSVC )
+      string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
+      # Windows: Add -mconsole to LINK_FLAGS to get a console window for debug output
+      if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
+        set_target_properties( mscore
+           PROPERTIES
+              COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE} ${QT_DEFINITIONS} -DQT_SVG_LIB -DQT_GUI_LIB -DQT_XML_LIB -DQT_CORE_LIB"
+              LINK_FLAGS ( "/LIBPATH:${QT_INSTALL_PREFIX}/lib")
+              #LINK_FLAGS "-mwindows -mconsole -L ${QT_INSTALL_PREFIX}/lib"
+           )
+      else(CMAKE_BUILD_TYPE MATCHES "DEBUG")
+        set_target_properties( mscore
+           PROPERTIES
+              COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE} ${QT_DEFINITIONS} -DQT_SVG_LIB -DQT_GUI_LIB -DQT_XML_LIB -DQT_CORE_LIB"
+              LINK_FLAGS ( "/LIBPATH:${QT_INSTALL_PREFIX}/lib")
+              # LINK_FLAGS "-Wl,-S -mwindows -L ${QT_INSTALL_PREFIX}/lib"
+           )
+      endif(CMAKE_BUILD_TYPE MATCHES "DEBUG")
+
+      target_link_libraries(mscore
+         portaudio
+         portmidi
+         winmm
+         mscore_freetype
+         z
+         )
+
+      if (OMR)
+         target_link_libraries(mscore omr poppler)
+         if (OCR)
+               target_link_libraries(mscore tesseract_api)
+         endif (OCR)
+      endif (OMR)
+
+      # Keep dependencies in alphabetical order. Changes made to this list
+      # might need to be made in "build/Linux+BSD/portable/copy-libs" too.
+      get_filename_component(COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
+      get_filename_component (MINGW_ROOT ${COMPILER_DIR} DIRECTORY)
+      foreach (QtLibrary ${QT_LIBRARIES})
+         message("Library ${QtLibrary}")
+         # always use release libs
+         set_target_properties(${QtLibrary} PROPERTIES MAP_IMPORTED_CONFIG_DEBUG "RELEASE")
+         get_target_property(QtSharedLibrary ${QtLibrary} LOCATION_RELEASE)
+         if (EXISTS ${QtSharedLibrary})
+             list (APPEND QtInstallLibraries ${QtSharedLibrary})
+         endif (EXISTS ${QtSharedLibrary})
+      endforeach (QtLibrary ${QT_LIBRARIES})
+      list(REMOVE_DUPLICATES QtInstallLibraries)
+
+      target_link_libraries(mscore ${QT_LIBRARIES})
+
+      install( TARGETS mscore RUNTIME DESTINATION bin )
+
+      install( FILES
+         ${MINGW_ROOT}/bin/libgcc_s_dw2-1.dll
+         ${MINGW_ROOT}/bin/libstdc++-6.dll
+         ${MINGW_ROOT}/bin/libwinpthread-1.dll
+         ${MINGW_ROOT}/lib/libogg.dll
+         ${MINGW_ROOT}/lib/libsndfile-1.dll
+         ${MINGW_ROOT}/lib/libvorbis.dll
+         ${MINGW_ROOT}/lib/libvorbisfile.dll
+         ${MINGW_ROOT}/lib/portaudio.dll
+         ${MINGW_ROOT}/opt/bin/libeay32.dll
+         ${MINGW_ROOT}/opt/bin/ssleay32.dll
+         ${QtInstallLibraries}
+         ${PROJECT_SOURCE_DIR}/build/qt.conf
+         DESTINATION bin)
+
+      install (FILES
+         ${MINGW_ROOT}/lib/lame_enc.dll
+         DESTINATION bin
+         OPTIONAL)
+
+       install(FILES
+         ${QT_INSTALL_PREFIX}/plugins/iconengines/qsvgicon.dll
+         DESTINATION bin/iconengines)
+
+       install(FILES
+         ${QT_INSTALL_PREFIX}/plugins/imageformats/qjpeg.dll
+         ${QT_INSTALL_PREFIX}/plugins/imageformats/qsvg.dll
+         ${QT_INSTALL_PREFIX}/plugins/imageformats/qtiff.dll
+         DESTINATION bin/imageformats)
+
+       install(FILES
+         ${QT_INSTALL_PREFIX}/plugins/platforms/qwindows.dll
+         DESTINATION bin/platforms)
+
+       install(FILES
+         ${QT_INSTALL_PREFIX}/plugins/printsupport/windowsprintersupport.dll
+         DESTINATION bin/printsupport)
+
+       install(FILES
+         ${QT_INSTALL_PREFIX}/plugins/sqldrivers/qsqlite.dll
+         DESTINATION bin/sqldrivers)
+
+       install(DIRECTORY
+         ${QT_INSTALL_PREFIX}/qml
+         DESTINATION .
+         REGEX ".*d\\.dll" EXCLUDE
+         REGEX ".*QtGraphicalEffects.*" EXCLUDE
+         REGEX ".*QtMultimedia.*" EXCLUDE
+         REGEX ".*QtSensors.*" EXCLUDE
+         REGEX ".*QtTest.*" EXCLUDE
+         REGEX ".*QtWebkit.*" EXCLUDE)
+      
+   endif ( NOT MSVC )
 endif (MINGW)
 
 if (APPLE)
