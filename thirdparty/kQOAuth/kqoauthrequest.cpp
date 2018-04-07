@@ -264,8 +264,11 @@ bool KQOAuthRequestPrivate::validateRequest() const {
         return false;
     }
 
+#if (!defined (_MSCVER) && !defined (_MSC_VER))
+    // Keep only for non-Visual Studio builds. In VS, this generates and "unreachable code" warning
     // We should not come here.
     return false;
+#endif
 }
 
 //////////// Public implementation ////////////////
