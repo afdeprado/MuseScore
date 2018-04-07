@@ -302,7 +302,10 @@ QString AccessibleAbstractSlider::text(QAccessible::Text t) const
             default:
                   return QString();
             }
+#if (!defined (_MSCVER) && !defined (_MSC_VER))
+      // Eliminate "unreachable code" warning for VS compile target.
       return QString();
+#endif
       }
 
 void AccessibleAbstractSlider::valueChanged(double, int)
