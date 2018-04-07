@@ -205,8 +205,8 @@
 #define Q_ASSERT(a)
 #endif
 
-// Undefined problematic #def'd macros in Microsoft headers
 #if (defined (_MSCVER) || defined (_MSC_VER))
+   // Undefined problematic #def'd macros in Microsoft headers
    #undef STRING_NONE
    #undef small
 #endif
