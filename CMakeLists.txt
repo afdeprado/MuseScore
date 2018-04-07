@@ -184,8 +184,9 @@ if (APPLE)
    SET(CMAKE_INSTALL_RPATH "${QT_INSTALL_PREFIX}/lib")
 else (APPLE)
    if (MSVC)
-   # TODO: Set options for MSVC toolchain
-      set(CMAKE_CXX_FLAGS                "/DWIN32 /D_WINDOWS /GR /EHsc /D_UNICODE /DUNICODE")
+   # Set compiler options for VS2017 toolchain.
+   # Note: /D_CRT_SECURE_NO WARNINGS disables warnings when using "non-secure" library functions like sscanf...
+      set(CMAKE_CXX_FLAGS                "/DWIN32 /D_WINDOWS /GR /EHsc /D_UNICODE /DUNICODE /D_CRT_SECURE_NO_WARNINGS")
       set(CMAKE_CXX_FLAGS_DEBUG          "/MDd /std:c++14 /W4 /Zi /Ob0 /Od /RTC1")
       set(CMAKE_CXX_FLAGS_RELEASE        "/MD /permissive- /std:c++14 /W4 /O2 /Ob2 -DNDEBUG -DQT_NO_DEBUG")
       set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MD /permissive- /std:c++14 /W4 /Zi /O2 /Ob1 -DNDEBUG -DQT_NO_DEBUG")
