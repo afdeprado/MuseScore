@@ -34,6 +34,7 @@ macro( precompiled_header includes header_name build_pch)
             set (PCH_INCLUDE "-include ${PCH_HEADER}")
         else (NOT MSVC)
             set (PCH_INCLUDE "/FI${PCH_HEADER}")
+            set (PCH_CPP "${PROJECT_BINARY_DIR}/${header_name}.cpp")
         endif (NOT MSVC)
 
         if( ${build_pch} )
@@ -83,4 +84,23 @@ macro( xcode_pch target_name header_name )
             XCODE_ATTRIBUTE_GCC_PRECOMPILE_PREFIX_HEADER "YES"
         )
     endif()
+endmacro()
+
+# VStudio PCH support. Has to be called *AFTER* the target is created.
+# "header_name" - the name of the PCH header, without the extension; "all" or something similar;
+#                  note that *the source file compiling the header* needs to have the same name
+macro( vstudio_pch target_name header_name )
+    if( MSVC )
+        target_sources(
+            ${target_name}
+            PUBLIC ${PCH_CPP}
+            )  
+
+         ### TODO: work on this! If this is included in each CMakeLists.txt subdir, it should do the trick...
+        set_source_file_properties(
+            ${PCH_CPP}
+            PROPERTIES
+               COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE} /Yc"
+        ) 
+    endif( MSVC )
 endmacro()
