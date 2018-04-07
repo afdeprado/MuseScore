@@ -48,6 +48,12 @@
 #include <functional>
 #include <memory>
 
+// Disable warning C4127: conditional expression is constant in VS2017 (generated in header file qvector.h)
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   #pragma warning ( push )
+   #pragma warning ( disable: 4127)
+#endif
+
 #include <QtGui>
 #include <QLoggingCategory>
 #include <QModelIndex>
@@ -199,10 +205,10 @@
 #define Q_ASSERT(a)
 #endif
 
-// Undefined problematic #def'd macros in Microsoft headers
 #if (defined (_MSCVER) || defined (_MSC_VER))
-#undef STRING_NONE
-#undef small
+   // Undefined problematic #def'd macros in Microsoft headers
+   #undef STRING_NONE
+   #undef small
 #endif
 
 #endif  // __cplusplus
