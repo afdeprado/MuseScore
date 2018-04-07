@@ -187,6 +187,10 @@ else (APPLE)
    # Set compiler options for VS2017 toolchain.
    # Note: /D_CRT_SECURE_NO WARNINGS disables warnings when using "non-secure" library functions like sscanf...
       set(CMAKE_CXX_FLAGS                "/DWIN32 /D_WINDOWS /GR /EHsc /D_UNICODE /DUNICODE /D_CRT_SECURE_NO_WARNINGS")
+      if (USE_SSE)
+         # If USE_SSE is set, enable use of SSE instructions to compiler.
+         set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /arch:SSE")
+      endif (USE_SSE)
       set(CMAKE_CXX_FLAGS_DEBUG          "/MDd /std:c++14 /W4 /Zi /Ob0 /Od /RTC1")
       set(CMAKE_CXX_FLAGS_RELEASE        "/MD /permissive- /std:c++14 /W4 /O2 /Ob2 -DNDEBUG -DQT_NO_DEBUG")
       set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MD /permissive- /std:c++14 /W4 /Zi /O2 /Ob1 -DNDEBUG -DQT_NO_DEBUG")
