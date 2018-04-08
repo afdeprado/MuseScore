@@ -200,7 +200,10 @@ bool MidiCoreEvent::isChannelEvent() const
             default:
                   return false;
             }
+#if (!defined (_MSCVER) && !defined (_MSC_VER))
+      // Prevent "unreachable code" warning in MSVC.
       return false;
+#endif
       }
 
 //---------------------------------------------------------
