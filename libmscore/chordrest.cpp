@@ -842,7 +842,10 @@ QVariant ChordRest::propertyDefault(Pid propertyId) const
             default:
                   return DurationElement::propertyDefault(propertyId);
             }
+#if (!defined (_MSCVER) && !defined (_MSC_VER))
+      // Prevent unreachable code warning in MSVC
       triggerLayout();
+#endif
       }
 
 //---------------------------------------------------------
