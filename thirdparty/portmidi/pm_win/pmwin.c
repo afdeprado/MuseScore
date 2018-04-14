@@ -92,7 +92,10 @@ PmDeviceID Pm_GetDefaultOutputDeviceID() {
         }
     }
     return pmNoDevice;
+#if (!defined (_MSCVER) && !defined (_MSC_VER))
+    // Prevent MSVC warning: "unreachable code"
     return 0;
+#endif
 }
 
 #include "stdio.h"

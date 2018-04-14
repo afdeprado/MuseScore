@@ -6,6 +6,16 @@
 #include "pminternal.h"
 #include <assert.h>
 
+#if (defined (_MSCVER) || defined (_MSC_VER))
+/* Define UNREFERENCED_PARAMETER macro to suppress warnings about unreferenced parameters. */
+#define UNREFERENCED_PARAMETER(P)          (P)
+
+/* Suppress warnings:
+      C4018: signed/unsigned mismatch in comparison
+      C4244: narrowing conversion, possible loss of data */
+#pragma warning(disable : 4018 4244)
+#endif
+
 #define MIDI_CLOCK      0xf8
 #define MIDI_ACTIVE     0xfe
 #define MIDI_STATUS_MASK 0x80
@@ -154,40 +164,73 @@ const PmDeviceInfo* Pm_GetDeviceInfo( PmDeviceID id ) {
 
 /* pm_success_fn -- "noop" function pointer */
 PmError pm_success_fn(PmInternal *midi) {
-    return pmNoError;
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   UNREFERENCED_PARAMETER(midi);
+#endif
+   return pmNoError;
 }
 
 /* none_write -- returns an error if called */
 PmError none_write_short(PmInternal *midi, PmEvent *buffer) {
-    return pmBadPtr;
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   UNREFERENCED_PARAMETER(midi);
+   UNREFERENCED_PARAMETER(buffer);
+#endif
+   return pmBadPtr;
 }
 
 /* pm_fail_timestamp_fn -- placeholder for begin_sysex and flush */
 PmError pm_fail_timestamp_fn(PmInternal *midi, PmTimestamp timestamp) {
-    return pmBadPtr;
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   UNREFERENCED_PARAMETER(midi);
+   UNREFERENCED_PARAMETER(timestamp);
+#endif
+   return pmBadPtr;
 }
 
 PmError none_write_byte(PmInternal *midi, unsigned char byte, 
                         PmTimestamp timestamp) {
-    return pmBadPtr;
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   UNREFERENCED_PARAMETER(midi);
+   UNREFERENCED_PARAMETER(byte);
+   UNREFERENCED_PARAMETER(timestamp);
+#endif
+   return pmBadPtr;
 }
 
 /* pm_fail_fn -- generic function, returns error if called */
 PmError pm_fail_fn(PmInternal *midi) {
-    return pmBadPtr;
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   UNREFERENCED_PARAMETER(midi);
+#endif
+   return pmBadPtr;
 }
 
 static PmError none_open(PmInternal *midi, void *driverInfo) {
-    return pmBadPtr;
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   UNREFERENCED_PARAMETER(midi);
+   UNREFERENCED_PARAMETER(driverInfo);
+#endif
+   return pmBadPtr;
 }
 static void none_get_host_error(PmInternal * midi, char * msg, unsigned int len) {
-    strcpy(msg, "");
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   UNREFERENCED_PARAMETER(midi);
+   UNREFERENCED_PARAMETER(len);
+#endif
+   strcpy(msg, "");
 }
 static unsigned int none_has_host_error(PmInternal * midi) {
-    return FALSE;
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   UNREFERENCED_PARAMETER(midi);
+#endif
+   return FALSE;
 }
 PmTimestamp none_synchronize(PmInternal *midi) {
-    return 0;
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   UNREFERENCED_PARAMETER(midi);
+#endif
+   return 0;
 }
 
 #define none_abort pm_fail_fn
@@ -347,11 +390,11 @@ int Pm_Read(PortMidiStream *stream, PmEvent *buffer, long length) {
     }
 
     while (n < length) {
-        PmError err = Pm_Dequeue(midi->queue, buffer++);
-        if (err == pmBufferOverflow) {
+        PmError err1 = Pm_Dequeue(midi->queue, buffer++);
+        if (err1 == pmBufferOverflow) {
             /* ignore the data we have retreived so far */
             return pm_errmsg(pmBufferOverflow);
-        } else if (err == 0) { /* empty queue */
+        } else if (err1 == 0) { /* empty queue */
             break;
         }
         n++;
@@ -585,12 +628,12 @@ PmError Pm_WriteSysEx(PortMidiStream *stream, PmTimestamp when,
                 buffer_size = BUFLEN;
                 /* optimization: maybe we can just copy bytes */
                 if (midi->fill_base) {
-                    PmError err;
+                    PmError err1;
                     while (*(midi->fill_offset_ptr) < midi->fill_length) {
                         midi->fill_base[(*midi->fill_offset_ptr)++] = *msg;
                         if (*msg++ == MIDI_EOX) {
-                            err = pm_end_sysex(midi);
-                            if (err != pmNoError) return pm_errmsg(err);
+                            err1 = pm_end_sysex(midi);
+                            if (err1 != pmNoError) return pm_errmsg(err1);
                             goto end_of_sysex;
                         }
                     }
