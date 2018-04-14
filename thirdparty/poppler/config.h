@@ -286,3 +286,10 @@
 
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
+
+#if (defined (_MSCVER) || defined (_MSC_VER))
+   // Undefine UNICODE for MSVC to get the char-based library functions
+   #ifdef UNICODE
+   #undef UNICODE
+   #endif
+#endif
