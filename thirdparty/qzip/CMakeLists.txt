@@ -38,6 +38,7 @@ else (NOT MSVC)
       PROPERTIES
          COMPILE_FLAGS "${PCH_INCLUDE} ${PCH_FORCE_USE}"
       )
+      include_directories("${PROJECT_SOURCE_DIR}/dependencies/include/zlib")
 endif (NOT MSVC)   
 
 xcode_pch(qzip all)
