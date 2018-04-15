@@ -938,7 +938,7 @@ void Timeline::drawGrid(int global_rows, int global_cols)
       //Create stagger array if collapsed_meta is false
 #if (!defined (_MSCVER) && !defined (_MSC_VER))
       int stagger_arr[num_metas];
-      for(unsigned int row = 0; row < num_metas; row++)
+      for (unsigned int row = 0; row < num_metas; row++)
          stagger_arr[row] = 0;
 #else
       // MSVC does not support VLA. Replace with std::vector. If profiling determines that the
