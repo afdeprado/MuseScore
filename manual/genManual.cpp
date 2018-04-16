@@ -230,7 +230,7 @@ static QString linkClass(const QString& in)
       {
       if (reClasses.pattern().isEmpty()) {
             QStringList classNames;
-            foreach(const Class& cl, classes)
+            for(const Class& cl : classes)
                   classNames.append(cl.name);
 
             reClasses.setPattern("\\b(" + classNames.join('|') + ")\\b");
